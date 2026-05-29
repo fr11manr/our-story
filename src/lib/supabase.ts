@@ -9,6 +9,8 @@ export type DatabasePhoto = {
   description: string;
   src: string;
   featured: boolean;
+  pinned?: boolean | null;
+  sort_order?: number | null;
   height: PhotoMemory["height"] | null;
   created_at?: string;
 };
@@ -23,6 +25,8 @@ export type DatabaseVideo = {
   video_src: string | null;
   external_url: string | null;
   featured: boolean;
+  pinned?: boolean | null;
+  sort_order?: number | null;
   created_at?: string;
 };
 
@@ -32,6 +36,11 @@ export type DatabaseTimeline = {
   title: string;
   description: string;
   accent: string | null;
+  image?: string | null;
+  category?: string | null;
+  featured?: boolean | null;
+  pinned?: boolean | null;
+  sort_order?: number | null;
   created_at?: string;
 };
 
@@ -100,6 +109,8 @@ export function photoFromRow(row: DatabasePhoto): PhotoMemory {
     description: row.description,
     src: row.src,
     featured: row.featured,
+    pinned: Boolean(row.pinned),
+    sortOrder: row.sort_order ?? undefined,
     height: row.height ?? "medium",
   };
 }
@@ -115,6 +126,8 @@ export function videoFromRow(row: DatabaseVideo): VideoMemory {
     videoSrc: row.video_src ?? undefined,
     externalUrl: row.external_url ?? undefined,
     featured: row.featured,
+    pinned: Boolean(row.pinned),
+    sortOrder: row.sort_order ?? undefined,
   };
 }
 
@@ -125,5 +138,10 @@ export function timelineFromRow(row: DatabaseTimeline): TimelineMemory {
     date: row.date,
     description: row.description,
     accent: row.accent ?? "Rose",
+    image: row.image ?? undefined,
+    category: row.category ?? undefined,
+    featured: Boolean(row.featured),
+    pinned: Boolean(row.pinned),
+    sortOrder: row.sort_order ?? undefined,
   };
 }

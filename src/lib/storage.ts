@@ -1,4 +1,14 @@
-import type { PhotoMemory, TimelineMemory, VideoMemory } from "@/data/memories";
+import type {
+  HomeImage,
+  Letter,
+  PhotoMemory,
+  SecretCard,
+  SpecialDate,
+  StoryAsset,
+  StoryChapter,
+  TimelineMemory,
+  VideoMemory,
+} from "@/data/memories";
 
 export async function fetchMemories() {
   const response = await fetch("/api/memories", { cache: "no-store" });
@@ -9,6 +19,12 @@ export async function fetchMemories() {
     photos: PhotoMemory[];
     videos: VideoMemory[];
     timeline: TimelineMemory[];
+    letters: Letter[];
+    specialDates: SpecialDate[];
+    secretCards: SecretCard[];
+    homeImages: HomeImage[];
+    storyChapters: StoryChapter[];
+    storyAssets: StoryAsset[];
   };
 }
 

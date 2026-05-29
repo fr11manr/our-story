@@ -1,117 +1,22 @@
 # Our Story
 
-一个可部署上线的情侣纪念网站，使用 Next.js、TypeScript、Tailwind CSS、Framer Motion、lucide-react 和 Supabase。
+一个可长期维护、可部署上线的情侣纪念网站。网站使用 Next.js、TypeScript、Tailwind CSS、Framer Motion、lucide-react 和 Supabase；访问主站需要情侣密码，进入 `/admin` 需要单独管理密码。
 
-网站访问使用情侣密码，登录状态保存在 httpOnly cookie 中；Admin 页面使用单独的管理密码。照片、视频文件保存在 Supabase Storage，标题、日期、分类、描述、是否精选等元数据保存在 Supabase Database。
+## 本地启动
 
-## 1. 创建 Supabase 项目
-
-1. 打开 [Supabase](https://supabase.com)。
-2. 创建一个新项目。
-3. 进入 Project Settings -> API，复制：
-   - Project URL
-   - anon public key
-   - service_role key
-
-注意：`service_role key` 只放在服务端环境变量里，不要暴露到浏览器。
-
-## 2. 创建数据库表
-
-进入 Supabase 项目的 SQL Editor，执行下面的 SQL：
-
-```sql
-create table if not exists public.photos (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  date date not null,
-  category text not null,
-  description text not null default '',
-  src text not null,
-  featured boolean not null default false,
-  height text not null default 'medium',
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.videos (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  date date not null,
-  category text not null,
-  description text not null default '',
-  video_src text not null,
-  external_url text,
-  featured boolean not null default false,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.timeline (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  date date not null,
-  description text not null default '',
-  accent text default 'Rose',
-  created_at timestamptz not null default now()
-);
+```bash
+npm install
+npm run dev
 ```
 
-可选：插入几条初始时间线数据：
+打开 `http://localhost:3000`。检查生产构建：
 
-```sql
-insert into public.timeline (title, date, description, accent)
-values
-  ('The Day We Chose Each Other', '2024-04-15', '把你们最重要的开始写在这里。', 'Rose'),
-  ('First Trip', '2024-06-01', '第一次一起去新的地方。', 'Gold'),
-  ('One Year Anniversary', '2025-04-15', '从心动到笃定，每一天都值得被记住。', 'Pearl');
+```bash
+npm run lint
+npm run build
 ```
 
-## 3. 设置 Row Level Security
-
-本项目通过服务端 API 读取和写入 Supabase。为了让网站可读公开素材，但上传必须走服务端管理密钥，推荐这样设置：
-
-```sql
-alter table public.photos enable row level security;
-alter table public.videos enable row level security;
-alter table public.timeline enable row level security;
-
-create policy "Public read photos"
-on public.photos for select
-to anon
-using (true);
-
-create policy "Public read videos"
-on public.videos for select
-to anon
-using (true);
-
-create policy "Public read timeline"
-on public.timeline for select
-to anon
-using (true);
-```
-
-不要给 `anon` 添加 insert/update/delete policy。上传由 Next.js API 使用 `SUPABASE_SERVICE_ROLE_KEY` 完成。
-
-## 4. 创建 Storage Bucket
-
-进入 Supabase Storage，创建两个 bucket：
-
-- `photos`
-- `videos`
-
-为了让前台页面能直接显示图片和播放视频，建议把这两个 bucket 设置为 Public。
-
-如果你想使用私有 bucket，需要改造图片和视频 URL 的生成方式，改为 signed URL。
-
-如果你之前已经创建过带 `cover` 字段的视频表，可以执行：
-
-```sql
-alter table public.videos alter column cover drop not null; -- only if the column exists
-alter table public.videos alter column video_src set not null;
-```
-
-新版本的视频卡片直接使用 `video_src` 的第一帧做封面，不再需要单独上传封面图。
-
-## 5. 配置环境变量
+## 环境变量
 
 在项目根目录创建 `.env.local`：
 
@@ -121,100 +26,235 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的 Supabase anon public key
 SUPABASE_SERVICE_ROLE_KEY=你的 Supabase service_role key
 
 SITE_PASSWORD=情侣访问密码
-ADMIN_PASSWORD=管理上传密码
+ADMIN_PASSWORD=管理后台密码
 ```
 
-示例：
+`SITE_PASSWORD` 用于进入主站，`ADMIN_PASSWORD` 用于进入 `/admin`。修改密码后重启开发服务器或重新部署 Vercel。
 
-```bash
-SITE_PASSWORD=LoveR0415
-ADMIN_PASSWORD=AdminR0415
+## Supabase 表
+
+在 Supabase SQL Editor 执行：
+
+```sql
+create extension if not exists pgcrypto;
+
+create table if not exists public.photos (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  date date not null default current_date,
+  category text not null default 'Favorite Moments',
+  description text not null default '',
+  src text not null,
+  featured boolean not null default false,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  height text not null default 'medium',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.videos (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  date date not null default current_date,
+  category text not null default 'Favorite Moments',
+  description text not null default '',
+  video_src text,
+  external_url text,
+  featured boolean not null default false,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.timeline (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  date date not null default current_date,
+  description text not null default '',
+  image text,
+  category text,
+  accent text default 'Rose',
+  featured boolean not null default false,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.letters (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  date date not null default current_date,
+  author text not null default 'Me',
+  content text not null default '',
+  featured boolean not null default false,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.special_dates (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  date date not null default current_date,
+  label text not null default '纪念日',
+  description text,
+  featured boolean not null default false,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.secret_cards (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  content text not null default '',
+  category text not null default 'Private',
+  date date,
+  image text,
+  featured boolean not null default false,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.home_images (
+  id uuid primary key default gen_random_uuid(),
+  title text not null default 'Home image',
+  image text not null,
+  slot text not null,
+  description text,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.story_assets (
+  id uuid primary key default gen_random_uuid(),
+  title text not null default 'Our story image',
+  image text not null,
+  slot text not null default 'main',
+  description text,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.story_chapters (
+  id uuid primary key default gen_random_uuid(),
+  eyebrow text not null default 'Chapter',
+  title text not null,
+  content text not null default '',
+  image text,
+  pinned boolean not null default false,
+  sort_order integer default 0,
+  created_at timestamptz not null default now()
+);
 ```
 
-`SITE_PASSWORD` 用于进入主站，`ADMIN_PASSWORD` 用于进入 `/admin` 上传页面。
+如果你之前已经创建过旧表，可以执行这些补充字段：
 
-## 6. 本地运行
+```sql
+alter table public.photos add column if not exists pinned boolean not null default false;
+alter table public.photos add column if not exists sort_order integer default 0;
 
-安装依赖：
+alter table public.videos add column if not exists pinned boolean not null default false;
+alter table public.videos add column if not exists sort_order integer default 0;
+alter table public.videos add column if not exists external_url text;
+alter table public.videos alter column video_src drop not null;
 
-```bash
-npm install
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'videos'
+      and column_name = 'cover'
+  ) then
+    alter table public.videos alter column cover drop not null;
+  end if;
+end $$;
+
+alter table public.timeline add column if not exists image text;
+alter table public.timeline add column if not exists category text;
+alter table public.timeline add column if not exists featured boolean not null default false;
+alter table public.timeline add column if not exists pinned boolean not null default false;
+alter table public.timeline add column if not exists sort_order integer default 0;
 ```
 
-启动开发服务器：
+## RLS 策略
 
-```bash
-npm run dev
+前台读取通过服务端 API 完成，后台写入通过 `SUPABASE_SERVICE_ROLE_KEY` 完成。推荐开启 RLS，并只允许匿名读取：
+
+```sql
+alter table public.photos enable row level security;
+alter table public.videos enable row level security;
+alter table public.timeline enable row level security;
+alter table public.letters enable row level security;
+alter table public.special_dates enable row level security;
+alter table public.secret_cards enable row level security;
+alter table public.home_images enable row level security;
+alter table public.story_assets enable row level security;
+alter table public.story_chapters enable row level security;
+
+create policy "Public read photos" on public.photos for select to anon using (true);
+create policy "Public read videos" on public.videos for select to anon using (true);
+create policy "Public read timeline" on public.timeline for select to anon using (true);
+create policy "Public read letters" on public.letters for select to anon using (true);
+create policy "Public read special_dates" on public.special_dates for select to anon using (true);
+create policy "Public read secret_cards" on public.secret_cards for select to anon using (true);
+create policy "Public read home_images" on public.home_images for select to anon using (true);
+create policy "Public read story_assets" on public.story_assets for select to anon using (true);
+create policy "Public read story_chapters" on public.story_chapters for select to anon using (true);
 ```
 
-打开：
+不要给 `anon` 开 insert/update/delete。Admin 的新增、编辑、删除都由 Next.js API 使用 service role key 完成。
 
-```text
-http://localhost:3000
-```
+## Storage Bucket
 
-检查构建：
+在 Supabase Storage 创建两个 public bucket：
 
-```bash
-npm run build
-```
+- `photos`
+- `videos`
 
-代码检查：
+照片、Timeline 图片、Secret Room 图片、Home 图片、Our Story 图片都进入 `photos` bucket。视频进入 `videos` bucket。视频卡片直接用 `video_src` 的视频第一帧做预览，不需要单独封面图。
 
-```bash
-npm run lint
-```
+## Admin 内容维护
 
-## 7. 上传照片和视频
+进入 `/admin` 后输入管理密码。后台按 tab 分区：
 
-1. 打开 `http://localhost:3000`，输入情侣密码。
-2. 进入 `/admin`。
-3. 输入管理密码。
-4. 选择 `Photo` 或 `Video`。
-5. 填写标题、日期、分类、描述，选择是否精选。
-6. 上传照片；视频只需要上传视频文件。
-7. 点击 `Save Memory`。
+- `Photos`：管理 Gallery 照片和首页精选照片。
+- `Videos`：管理 Video Memories 视频。
+- `Timeline`：管理时间线标题、日期、描述、分类和可选图片。
+- `Letters`：管理情书和留言。
+- `Special Dates`：管理纪念日，前台会自动计算天数。
+- `Secret Room`：管理私密房间卡片。
+- `Home Images`：管理首页 Hero 三张图。
+- `Our Story Image`：管理 Our Story 页面左侧大图。
+- `Story Chapters`：管理 Our Story 页面章节。
 
-上传成功后：
+Home 图片位置：
 
-- 图片文件进入 Supabase Storage 的 `photos` bucket
-- 视频文件进入 Supabase Storage 的 `videos` bucket
-- 元数据进入 Supabase Database 的 `photos` 或 `videos` 表
-- Gallery、Video Memories、Home 页面会自动读取并展示
-- Video Memories 会直接用视频第一帧做预览，hover 时静音播放，点击后弹窗完整播放
+- `hero_left`：首页 Hero 左上竖图。
+- `hero_right`：首页 Hero 右上竖图。
+- `hero_wide`：首页 Hero 下方横图。
 
-## 8. 替换默认内容
+Our Story 图片位置：
 
-默认内容在：
+- `main`：Our Story 页面左侧大图。
 
-```text
-src/data/memories.ts
-```
+每条内容都支持新增、编辑、删除、排序、Featured、Pinned。排序优先看 `pinned`，然后看 `sort_order`，再看日期或创建时间。
 
-当 Supabase 没有配置或云端表为空时，网站会使用这些默认内容作为只读展示。
+## 替换默认内容
 
-可以修改：
+当 Supabase 未配置或云端表为空时，页面会使用 `src/data/memories.ts` 的默认内容作为占位展示。长期维护时建议通过 Admin 添加真实内容；云端有数据后，Gallery、Video Memories、Timeline、Letters、Special Dates、Secret Room、Home Hero、Our Story 图片和章节都会读取 Supabase。
 
-- `photos`：默认照片
-- `videos`：默认视频
-- `timeline`：默认时间线
-- `letters`：情书/留言
-- `specialDates`：纪念日
-- `categories`：分类
+默认静态图片在 `public/photos`，可以保留作为空数据时的优雅默认图。
 
-默认图片在：
-
-```text
-public/photos
-```
-
-## 9. 部署到 Vercel
+## 部署到 Vercel
 
 1. 将项目推送到 GitHub。
-2. 打开 [Vercel](https://vercel.com)。
-3. New Project，选择这个 GitHub 仓库。
-4. Framework Preset 选择 Next.js。
-5. 在 Environment Variables 中添加：
+2. 在 Vercel 创建 Next.js 项目。
+3. 在 Vercel Environment Variables 添加：
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL
@@ -224,21 +264,17 @@ SITE_PASSWORD
 ADMIN_PASSWORD
 ```
 
-6. 点击 Deploy。
+4. 部署。线上访问会先进入情侣密码页，`/admin` 会再要求管理密码。
 
-部署完成后，任何人打开线上网址都会先进入密码页。输入情侣密码后才能浏览内容；进入 `/admin` 时还需要管理密码。
-
-## 10. 重要文件
+## 关键文件
 
 ```text
-middleware.ts                         # 访问保护和路由拦截
+src/proxy.ts                          # 访问保护
 src/app/unlock/page.tsx               # 主站密码页
 src/app/admin/unlock/page.tsx         # Admin 密码页
-src/app/api/auth/login/route.ts       # 主站登录 API
-src/app/api/auth/admin-login/route.ts # Admin 登录 API
-src/app/api/auth/logout/route.ts      # 退出登录 API
-src/app/api/memories/route.ts         # 从 Supabase 读取照片/视频/时间线
-src/app/api/uploads/route.ts          # 上传到 Supabase Storage 并写入数据库
+src/app/api/memories/route.ts         # 前台读取 Supabase 内容
+src/app/api/admin/content/route.ts    # Admin CRUD 和 Storage 上传
+src/app/admin/page.tsx                # 内容管理后台
 src/lib/supabase.ts                   # Supabase client 和数据映射
-src/lib/auth.ts                       # cookie 名称、密码读取和 cookie 配置
+src/data/memories.ts                  # 空数据时的默认内容
 ```

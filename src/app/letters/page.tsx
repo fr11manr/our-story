@@ -1,10 +1,14 @@
+"use client";
+
 import { MessageCircleHeart } from "lucide-react";
+import { useLetters } from "@/components/MemoryCards";
 import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
-import { letters } from "@/data/memories";
 
 export default function LettersPage() {
+  const letters = useLetters();
+
   return (
     <SiteShell>
       <PageTransition>

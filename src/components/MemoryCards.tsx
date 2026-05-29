@@ -6,11 +6,23 @@ import { motion } from "framer-motion";
 import { Calendar, ExternalLink, Play, Star, X } from "lucide-react";
 import {
   categories,
+  homeImages,
+  letters,
   photos,
+  secretCards,
+  specialDates,
+  storyAssets,
+  storyChapters,
   timeline,
   videos,
+  type HomeImage,
+  type Letter,
   type MemoryCategory,
   type PhotoMemory,
+  type SecretCard,
+  type SpecialDate,
+  type StoryAsset,
+  type StoryChapter,
   type TimelineMemory,
   type VideoMemory,
 } from "@/data/memories";
@@ -71,6 +83,50 @@ export function useTimelineMemories() {
   }, []);
 
   return useMemo(() => items, [items]);
+}
+
+function useCloudList<T>(key: keyof Awaited<ReturnType<typeof fetchMemories>>, fallback: T[]) {
+  const [items, setItems] = useState<T[]>(fallback);
+
+  useEffect(() => {
+    const sync = () => {
+      void fetchMemories()
+        .then((store) => {
+          const next = store[key] as T[];
+          setItems(next.length ? next : fallback);
+        })
+        .catch(() => setItems(fallback));
+    };
+    sync();
+    window.addEventListener("love-site-uploads-changed", sync);
+    return () => window.removeEventListener("love-site-uploads-changed", sync);
+  }, [fallback, key]);
+
+  return items;
+}
+
+export function useLetters() {
+  return useCloudList<Letter>("letters", letters);
+}
+
+export function useSpecialDates() {
+  return useCloudList<SpecialDate>("specialDates", specialDates);
+}
+
+export function useSecretCards() {
+  return useCloudList<SecretCard>("secretCards", secretCards);
+}
+
+export function useHomeImages() {
+  return useCloudList<HomeImage>("homeImages", homeImages);
+}
+
+export function useStoryChapters() {
+  return useCloudList<StoryChapter>("storyChapters", storyChapters);
+}
+
+export function useStoryAssets() {
+  return useCloudList<StoryAsset>("storyAssets", storyAssets);
 }
 
 export function GalleryMasonry({ featuredOnly = false }: { featuredOnly?: boolean }) {

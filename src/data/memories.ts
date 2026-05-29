@@ -13,6 +13,8 @@ export type PhotoMemory = {
   description: string;
   src: string;
   featured: boolean;
+  pinned?: boolean;
+  sortOrder?: number;
   height: "short" | "medium" | "tall";
 };
 
@@ -26,6 +28,8 @@ export type VideoMemory = {
   videoSrc?: string;
   externalUrl?: string;
   featured: boolean;
+  pinned?: boolean;
+  sortOrder?: number;
 };
 
 export type TimelineMemory = {
@@ -34,6 +38,11 @@ export type TimelineMemory = {
   title: string;
   description: string;
   accent: string;
+  image?: string;
+  category?: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sortOrder?: number;
 };
 
 export type Letter = {
@@ -42,6 +51,9 @@ export type Letter = {
   date: string;
   body: string;
   from: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sortOrder?: number;
 };
 
 export type SpecialDate = {
@@ -49,6 +61,52 @@ export type SpecialDate = {
   title: string;
   date: string;
   note: string;
+  description?: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sortOrder?: number;
+};
+
+export type SecretCard = {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  date?: string;
+  image?: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sortOrder?: number;
+};
+
+export type HomeImage = {
+  id: string;
+  title: string;
+  image: string;
+  slot: "hero_left" | "hero_right" | "hero_wide";
+  description?: string;
+  pinned?: boolean;
+  sortOrder?: number;
+};
+
+export type StoryChapter = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  content: string;
+  image?: string;
+  pinned?: boolean;
+  sortOrder?: number;
+};
+
+export type StoryAsset = {
+  id: string;
+  title: string;
+  image: string;
+  slot: "main";
+  description?: string;
+  pinned?: boolean;
+  sortOrder?: number;
 };
 
 export const categories: Array<"All" | MemoryCategory> = [
@@ -250,4 +308,56 @@ export const specialDates: SpecialDate[] = [
     date: "2025-04-15",
     note: "周年纪念",
   },
+];
+
+export const secretCards: SecretCard[] = [
+  {
+    id: "s-01",
+    title: "Future Plans",
+    content: "把最靠近心口的愿望、约定和惊喜放在这里，只让彼此看见。",
+    category: "Plans",
+    pinned: true,
+    sortOrder: 1,
+  },
+  {
+    id: "s-02",
+    title: "Private Promises",
+    content: "有些话适合晚一点打开，有些愿望适合一起慢慢实现。",
+    category: "Promises",
+    sortOrder: 2,
+  },
+];
+
+export const homeImages: HomeImage[] = [
+  { id: "h-01", title: "Hero image 1", image: "/photos/couple-1.svg", slot: "hero_left", sortOrder: 1 },
+  { id: "h-02", title: "Hero image 2", image: "/photos/couple-2.svg", slot: "hero_right", sortOrder: 2 },
+  { id: "h-03", title: "Hero wide image", image: "/photos/story.svg", slot: "hero_wide", sortOrder: 3 },
+];
+
+export const storyChapters: StoryChapter[] = [
+  {
+    id: "sc-01",
+    eyebrow: "Chapter 01",
+    title: "The First Spark",
+    content: "我们的故事可以从一个很小的瞬间开始：一次对视、一条消息、一顿饭，或者某个突然觉得“原来是你”的下午。",
+    sortOrder: 1,
+  },
+  {
+    id: "sc-02",
+    eyebrow: "Chapter 02",
+    title: "Growing Closer",
+    content: "后来，一些普通日子开始有了共同的节奏。一起走路、一起吃饭、一起把无聊的事情讲得很好笑。",
+    sortOrder: 2,
+  },
+  {
+    id: "sc-03",
+    eyebrow: "Chapter 03",
+    title: "Choosing Each Other",
+    content: "爱不是只有盛大瞬间，也是在很多细小选择里一次次坚定：今天也是你，明天也想是你。",
+    sortOrder: 3,
+  },
+];
+
+export const storyAssets: StoryAsset[] = [
+  { id: "sa-01", title: "Our story photo", image: "/photos/story.svg", slot: "main", sortOrder: 1 },
 ];

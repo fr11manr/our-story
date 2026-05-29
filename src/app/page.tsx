@@ -4,11 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CalendarHeart, Heart, Images, MessageCircleHeart, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { GalleryMasonry, VideoGrid, useTimelineMemories } from "@/components/MemoryCards";
+import { GalleryMasonry, VideoGrid, useHomeImages, useLetters, useTimelineMemories } from "@/components/MemoryCards";
 import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
-import { letters } from "@/data/memories";
 
 export default function Home() {
   return (
@@ -47,6 +46,14 @@ export default function Home() {
 }
 
 function Hero() {
+  const images = useHomeImages();
+  const bySlot = {
+    hero_left: images.find((item) => item.slot === "hero_left")?.image ?? "/photos/couple-1.svg",
+    hero_right: images.find((item) => item.slot === "hero_right")?.image ?? "/photos/couple-2.svg",
+    hero_wide: images.find((item) => item.slot === "hero_wide")?.image ?? "/photos/story.svg",
+  };
+  const heroImages = [bySlot.hero_left, bySlot.hero_right, bySlot.hero_wide];
+
   return (
     <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-white/[0.07] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:p-10 lg:min-h-[620px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,rgba(242,196,204,0.22),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_52%)]" />
@@ -78,7 +85,7 @@ function Hero() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {["/photos/couple-1.svg", "/photos/couple-2.svg", "/photos/story.svg"].map((src, index) => (
+          {heroImages.map((src, index) => (
             <motion.div
               key={src}
               className={`relative overflow-hidden rounded-[30px] border border-white/12 bg-white/10 shadow-2xl ${
@@ -93,6 +100,7 @@ function Hero() {
                 alt=""
                 fill
                 priority={index < 2}
+                unoptimized={src.startsWith("https://")}
                 sizes="(min-width: 1024px) 24vw, 45vw"
                 className="object-cover"
               />
@@ -173,6 +181,8 @@ function TimelinePreview() {
 }
 
 function LoveNotes() {
+  const letters = useLetters();
+
   return (
     <section className="mt-16">
       <SectionHeader eyebrow="Love Notes" title="Words worth keeping." />
