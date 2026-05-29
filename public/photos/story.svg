@@ -1,0 +1,8 @@
+<svg width="1000" height="1250" viewBox="0 0 1000 1250" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1000" height="1250" fill="#F4ECE4"/>
+  <rect x="70" y="80" width="860" height="1090" rx="56" fill="#B9827A"/>
+  <path d="M153 874C258 726 371 674 500 723C626 770 721 730 847 646V1095H153V874Z" fill="#F8F1EA"/>
+  <circle cx="500" cy="443" r="160" fill="#F7DED8"/>
+  <path d="M380 414C410 360 481 360 511 414C541 360 612 360 642 414C676 477 607 548 511 618C415 548 346 477 380 414Z" fill="#6E4B46"/>
+  <text x="500" y="1012" text-anchor="middle" fill="#6E4B46" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700">Our story photo</text>
+</svg>

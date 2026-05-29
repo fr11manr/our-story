@@ -1,0 +1,10 @@
+<svg width="900" height="1125" viewBox="0 0 900 1125" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1125" fill="#F5EEE8"/>
+  <rect x="60" y="60" width="780" height="1005" rx="50" fill="#C8B8A4"/>
+  <path d="M116 772C205 636 306 574 420 604C517 629 594 733 740 666V1005H116V772Z" fill="#F9F5EF"/>
+  <circle cx="312" cy="382" r="96" fill="#8E6961"/>
+  <circle cx="536" cy="382" r="96" fill="#564942"/>
+  <path d="M224 760C247 631 329 558 424 558C521 558 601 632 625 760H224Z" fill="#75514B"/>
+  <path d="M369 213C388 179 436 179 455 213C474 179 522 179 541 213C563 253 520 300 455 348C390 300 347 253 369 213Z" fill="#FFF8F3"/>
+  <text x="450" y="968" text-anchor="middle" fill="#604943" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Couple photo here</text>
+</svg>

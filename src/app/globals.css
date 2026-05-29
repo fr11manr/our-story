@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  --background: #07070d;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+::selection {
+  background: #d7aca6;
+  color: #2d2421;
+}
+
+.field {
+  min-height: 52px;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0 16px;
+  color: white;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.field:focus {
+  border-color: rgba(242, 196, 204, 0.72);
+  box-shadow: 0 0 0 4px rgba(242, 196, 204, 0.1);
+}
+
+.field::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.field option {
+  background: #14101a;
+  color: white;
+}
+
+.file-field {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 14px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.luxury-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-110%);
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.48), transparent);
+  transition: transform 620ms ease;
+}
+
+.luxury-button:hover::before {
+  transform: translateX(110%);
+}

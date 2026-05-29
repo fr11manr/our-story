@@ -1,0 +1,10 @@
+<svg width="900" height="1125" viewBox="0 0 900 1125" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="1125" fill="#EFE4DC"/>
+  <rect x="52" y="52" width="796" height="1021" rx="52" fill="#DDB8B0"/>
+  <circle cx="324" cy="414" r="96" fill="#7B5751"/>
+  <circle cx="555" cy="396" r="104" fill="#5F4D47"/>
+  <path d="M169 870C211 668 336 578 451 578C569 578 698 671 731 870H169Z" fill="#F8F1EB"/>
+  <path d="M280 822C307 711 377 664 449 664C524 664 600 714 622 822H280Z" fill="#A56E67"/>
+  <path d="M450 275C474 231 536 231 560 275C584 231 646 231 670 275C697 325 641 384 560 442C479 384 423 325 450 275Z" fill="#F7E8E3"/>
+  <text x="450" y="980" text-anchor="middle" fill="#6E4B46" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">Replace with your photo</text>
+</svg>
