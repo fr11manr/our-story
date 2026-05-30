@@ -15,6 +15,7 @@ type AnyTable = {
 };
 
 type DbError = { message: string; code?: string; details?: string };
+type UploadedFile = File & { name: string; size: number; type: string; arrayBuffer(): Promise<ArrayBuffer> };
 
 const tableNames = [
   "photos",
@@ -44,7 +45,7 @@ function numberOrNull(formData: FormData, key: string) {
   return Number.isFinite(value) ? value : null;
 }
 
-function extensionFor(file: File) {
+function extensionFor(file: UploadedFile) {
   const ext = path.extname(file.name);
   if (ext) return ext;
   if (file.type.includes("mp4")) return ".mp4";
@@ -54,16 +55,31 @@ function extensionFor(file: File) {
   return ".jpg";
 }
 
+function uploadedFile(value: FormDataEntryValue | null): UploadedFile | null {
+  if (!value || typeof value === "string") return null;
+  const candidate = value as Partial<UploadedFile>;
+  if (typeof candidate.arrayBuffer !== "function" || typeof candidate.size !== "number") return null;
+  if (candidate.size <= 0) return null;
+  return value as UploadedFile;
+}
+
 async function requireAdmin() {
   const cookieStore = await cookies();
   return cookieStore.get(ADMIN_SESSION_COOKIE)?.value === SESSION_VALUE;
 }
 
-async function uploadFile(file: File | null, bucket: "photos" | "videos", prefix: string) {
+async function uploadFile(file: UploadedFile | null, bucket: "photos" | "videos", prefix: string) {
   if (!file || file.size === 0) return "";
   const supabase = createSupabaseAdminClient();
   if (!supabase) throw new Error("Cloud archive is not ready yet.");
   const filePath = `${prefix}/${randomUUID()}${extensionFor(file)}`;
+  console.log("[admin/content] uploading file:", {
+    bucket,
+    filePath,
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
   const { error } = await supabase.storage.from(bucket).upload(filePath, file, {
     contentType: file.type || undefined,
     upsert: false,
@@ -94,11 +110,16 @@ function tablePayload(table: string, formData: FormData, fileUrl: string) {
     };
   }
   if (table === "videos") {
+    const videoSrc = fileUrl || text(formData, "videoSrc");
+    const externalUrl = text(formData, "externalUrl") || null;
+    if (!videoSrc && !externalUrl) {
+      throw new Error("Please upload a video file or provide an external video URL.");
+    }
     return {
       ...common,
       category: text(formData, "category", "Favorite Moments"),
-      video_src: fileUrl || text(formData, "videoSrc"),
-      external_url: text(formData, "externalUrl") || null,
+      video_src: videoSrc,
+      external_url: externalUrl,
     };
   }
   if (table === "timeline") {
@@ -202,9 +223,9 @@ export async function POST(request: Request) {
     const table = text(formData, "table");
     if (!tableSet.has(table)) return NextResponse.json({ ok: false, message: "Unknown table" }, { status: 400 });
 
-    const file = formData.get("file");
+    const file = uploadedFile(formData.get("file"));
     const isVideo = table === "videos";
-    const fileUrl = await uploadFile(file instanceof File ? file : null, isVideo ? "videos" : "photos", table);
+    const fileUrl = await uploadFile(file, isVideo ? "videos" : "photos", table);
     const payload = tablePayload(table, formData, fileUrl);
     const result = await getTable(table).insert(payload).select("*").single();
     console.log("[admin/content] insert result:", result);
@@ -225,9 +246,9 @@ export async function PATCH(request: Request) {
     const id = text(formData, "id");
     if (!tableSet.has(table) || !id) return NextResponse.json({ ok: false, message: "Missing table or id" }, { status: 400 });
 
-    const file = formData.get("file");
+    const file = uploadedFile(formData.get("file"));
     const isVideo = table === "videos";
-    const fileUrl = await uploadFile(file instanceof File ? file : null, isVideo ? "videos" : "photos", table);
+    const fileUrl = await uploadFile(file, isVideo ? "videos" : "photos", table);
     const payload = tablePayload(table, formData, fileUrl);
     const result = await getTable(table).update(payload).eq("id", id).select("*").single();
     console.log("[admin/content] update result:", result);

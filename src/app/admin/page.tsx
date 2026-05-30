@@ -294,7 +294,8 @@ function AdminStudio() {
       formData.set("table", active.key);
       if (editing) formData.set("id", editing.id);
       Object.entries(form).forEach(([key, value]) => formData.set(key, String(value)));
-      if (file) formData.set("file", file);
+      if (editing && !file) addExistingMedia(active.key, editing, formData);
+      if (file) formData.set("file", file, file.name);
 
       const response = await fetch("/api/admin/content", {
         method: editing ? "PATCH" : "POST",
@@ -457,6 +458,14 @@ function AdminStudio() {
                     {item.featured ? <span className="rounded-full bg-white/10 px-3 py-1">Featured</span> : null}
                     {item.pinned ? <span className="rounded-full bg-white/10 px-3 py-1">Pinned</span> : null}
                     {item.sort_order !== null && item.sort_order !== undefined ? <span className="rounded-full bg-white/10 px-3 py-1">Sort {String(item.sort_order)}</span> : null}
+                    {active.key === "videos" ? (
+                      <>
+                        <span className={`rounded-full px-3 py-1 ${item.video_src ? "bg-[#f2c4cc]/18 text-[#f2c4cc]" : "bg-white/10 text-white/42"}`}>
+                          video_src {item.video_src ? "ready" : "empty"}
+                        </span>
+                        {item.external_url ? <span className="rounded-full bg-white/10 px-3 py-1">External link</span> : null}
+                      </>
+                    ) : null}
                   </div>
                 </article>
               ))
@@ -504,7 +513,16 @@ function AdminField({
           Keep this item highlighted
         </span>
       ) : field.type === "file" ? (
-        <input type="file" accept={field.accept} onChange={(event) => onFile(event.target.files?.[0] ?? null)} className="file-field" />
+        <input
+          type="file"
+          accept={field.accept}
+          onChange={(event) => {
+            const selected = event.target.files?.[0] ?? null;
+            console.log("[admin] selected file:", selected ? { name: selected.name, size: selected.size, type: selected.type } : null);
+            onFile(selected);
+          }}
+          className="file-field"
+        />
       ) : (
         <input
           type={field.type}
@@ -520,4 +538,12 @@ function AdminField({
 
 function toSnake(value: string) {
   return value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+function addExistingMedia(table: ModuleKey, item: AdminItem, formData: FormData) {
+  if (table === "videos" && item.video_src) formData.set("videoSrc", String(item.video_src));
+  if (table === "photos" && item.src) formData.set("src", String(item.src));
+  if ((table === "timeline" || table === "secret_cards" || table === "home_images" || table === "story_assets" || table === "story_chapters") && item.image) {
+    formData.set("image", String(item.image));
+  }
 }

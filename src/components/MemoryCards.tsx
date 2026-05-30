@@ -318,7 +318,7 @@ function VideoCard({ video, index, onOpen }: { video: VideoMemory; index: number
         </div>
         <h3 className="mt-3 text-2xl font-semibold text-white">{video.title}</h3>
         <p className="mt-2 leading-7 text-white/58">{video.description}</p>
-        {!hasVideo && video.externalUrl ? (
+        {video.externalUrl ? (
           <a
             href={video.externalUrl}
             target="_blank"
