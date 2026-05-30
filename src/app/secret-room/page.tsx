@@ -2,13 +2,13 @@
 
 import { KeyRound, Sparkles } from "lucide-react";
 import Image from "next/image";
-import { useSecretCards } from "@/components/MemoryCards";
+import { LoadingMemoryGrid, useSecretCards } from "@/components/MemoryCards";
 import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
 
 export default function SecretRoomPage() {
-  const cards = useSecretCards();
+  const { items: cards, loaded } = useSecretCards();
 
   return (
     <SiteShell>
@@ -19,7 +19,7 @@ export default function SecretRoomPage() {
           description="这里适合放只有你们两个人懂的约定、愿望清单、惊喜计划，或者更私密的照片和文字。"
         />
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          {cards.map((card) => (
+          {!loaded ? <LoadingMemoryGrid count={3} /> : cards.map((card) => (
             <article key={card.id} className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.07] p-7 backdrop-blur-xl">
               {card.image ? (
                 <div className="relative -mx-3 -mt-3 mb-6 aspect-[4/3] overflow-hidden rounded-[24px]">

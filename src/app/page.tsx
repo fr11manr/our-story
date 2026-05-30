@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CalendarHeart, Heart, Images, MessageCircleHeart, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { GalleryMasonry, VideoGrid, useHomeImages, useLetters, useTimelineMemories } from "@/components/MemoryCards";
+import { GalleryMasonry, LoadingMemoryGrid, VideoGrid, useHomeImages, useLetters, useTimelineMemories } from "@/components/MemoryCards";
 import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
@@ -46,7 +46,7 @@ export default function Home() {
 }
 
 function Hero() {
-  const images = useHomeImages();
+  const { items: images, loaded } = useHomeImages();
   const bySlot = {
     hero_left: images.find((item) => item.slot === "hero_left")?.image ?? "/photos/couple-1.svg",
     hero_right: images.find((item) => item.slot === "hero_right")?.image ?? "/photos/couple-2.svg",
@@ -85,7 +85,13 @@ function Hero() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {heroImages.map((src, index) => (
+          {!loaded ? (
+            <>
+              <div className="aspect-[4/5] animate-pulse rounded-[30px] border border-white/12 bg-white/10" />
+              <div className="aspect-[4/5] animate-pulse rounded-[30px] border border-white/12 bg-white/10" />
+              <div className="col-span-2 aspect-[16/9] animate-pulse rounded-[30px] border border-white/12 bg-white/10" />
+            </>
+          ) : heroImages.map((src, index) => (
             <motion.div
               key={src}
               className={`relative overflow-hidden rounded-[30px] border border-white/12 bg-white/10 shadow-2xl ${
@@ -160,13 +166,13 @@ function StoryPreview() {
 }
 
 function TimelinePreview() {
-  const timeline = useTimelineMemories();
+  const { items: timeline, loaded } = useTimelineMemories();
 
   return (
     <article className="rounded-[32px] border border-white/10 bg-white/[0.07] p-6 backdrop-blur-xl sm:p-8">
       <h2 className="text-3xl font-semibold">Timeline</h2>
       <div className="mt-6 space-y-4">
-        {timeline.slice(0, 3).map((item) => (
+        {!loaded ? <LoadingMemoryGrid count={3} /> : timeline.slice(0, 3).map((item) => (
           <div key={item.id} className="grid gap-3 rounded-3xl border border-white/10 bg-black/14 p-4 sm:grid-cols-[120px_1fr]">
             <time className="text-sm font-semibold text-[#f2c4cc]">{item.date}</time>
             <div>
@@ -181,13 +187,13 @@ function TimelinePreview() {
 }
 
 function LoveNotes() {
-  const letters = useLetters();
+  const { items: letters, loaded } = useLetters();
 
   return (
     <section className="mt-16">
       <SectionHeader eyebrow="Love Notes" title="Words worth keeping." />
       <div className="mt-8 grid gap-5 md:grid-cols-2">
-        {letters.map((letter) => (
+        {!loaded ? <LoadingMemoryGrid count={2} /> : letters.map((letter) => (
           <article key={letter.id} className="rounded-[30px] border border-white/10 bg-white/[0.07] p-6 backdrop-blur-xl">
             <p className="text-sm text-[#f2c4cc]">{letter.date} · {letter.from}</p>
             <h3 className="mt-3 text-2xl font-semibold">{letter.title}</h3>

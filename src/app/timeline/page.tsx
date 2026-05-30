@@ -1,13 +1,13 @@
 "use client";
 
-import { useTimelineMemories } from "@/components/MemoryCards";
+import { LoadingMemoryGrid, useTimelineMemories } from "@/components/MemoryCards";
 import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
 import Image from "next/image";
 
 export default function TimelinePage() {
-  const timeline = useTimelineMemories();
+  const { items: timeline, loaded } = useTimelineMemories();
 
   return (
     <SiteShell>
@@ -18,7 +18,7 @@ export default function TimelinePage() {
           description="记录重要日期、旅行、告白、周年和所有值得回头看的节点。"
         />
         <div className="mt-12 space-y-5">
-          {timeline.map((item, index) => (
+          {!loaded ? <LoadingMemoryGrid count={4} /> : timeline.map((item, index) => (
             <article
               key={item.id}
               className="relative grid gap-5 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.07] p-6 backdrop-blur-xl sm:grid-cols-[180px_1fr]"

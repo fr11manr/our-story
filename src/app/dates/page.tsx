@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, HeartHandshake } from "lucide-react";
-import { useSpecialDates } from "@/components/MemoryCards";
+import { LoadingMemoryGrid, useSpecialDates } from "@/components/MemoryCards";
 import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
@@ -13,7 +13,7 @@ function daysSince(date: string) {
 }
 
 export default function DatesPage() {
-  const specialDates = useSpecialDates();
+  const { items: specialDates, loaded } = useSpecialDates();
 
   return (
     <SiteShell>
@@ -24,7 +24,7 @@ export default function DatesPage() {
           description="纪念日、第一次旅行、第一次见面、生日，都可以放在这里。"
         />
         <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {specialDates.map((item) => (
+          {!loaded ? <LoadingMemoryGrid count={3} /> : specialDates.map((item) => (
             <article key={item.id} className="rounded-[32px] border border-white/10 bg-white/[0.07] p-7 backdrop-blur-xl">
               <CalendarDays className="h-7 w-7 text-[#f2c4cc]" />
               <p className="mt-6 text-sm text-white/45">{item.note}</p>

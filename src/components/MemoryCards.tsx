@@ -28,14 +28,30 @@ import {
 } from "@/data/memories";
 import { fetchMemories } from "@/lib/storage";
 
+export function LoadingMemoryGrid({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          className="h-64 animate-pulse rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] backdrop-blur-xl"
+        />
+      ))}
+    </div>
+  );
+}
+
 export function usePhotoMemories() {
-  const [items, setItems] = useState<PhotoMemory[]>(photos);
+  const [items, setItems] = useState<PhotoMemory[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const sync = () => {
+      setLoaded(false);
       void fetchMemories()
         .then((store) => setItems(store.photos.length ? store.photos : photos))
-        .catch(() => setItems(photos));
+        .catch(() => setItems(photos))
+        .finally(() => setLoaded(true));
     };
     sync();
     window.addEventListener("love-site-uploads-changed", sync);
@@ -44,17 +60,20 @@ export function usePhotoMemories() {
     };
   }, []);
 
-  return useMemo(() => items, [items]);
+  return useMemo(() => ({ items, loaded }), [items, loaded]);
 }
 
 export function useVideoMemories() {
-  const [items, setItems] = useState<VideoMemory[]>(videos);
+  const [items, setItems] = useState<VideoMemory[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const sync = () => {
+      setLoaded(false);
       void fetchMemories()
         .then((store) => setItems(store.videos.length ? store.videos : videos))
-        .catch(() => setItems(videos));
+        .catch(() => setItems(videos))
+        .finally(() => setLoaded(true));
     };
     sync();
     window.addEventListener("love-site-uploads-changed", sync);
@@ -63,17 +82,20 @@ export function useVideoMemories() {
     };
   }, []);
 
-  return useMemo(() => items, [items]);
+  return useMemo(() => ({ items, loaded }), [items, loaded]);
 }
 
 export function useTimelineMemories() {
-  const [items, setItems] = useState<TimelineMemory[]>(timeline);
+  const [items, setItems] = useState<TimelineMemory[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const sync = () => {
+      setLoaded(false);
       void fetchMemories()
         .then((store) => setItems(store.timeline.length ? store.timeline : timeline))
-        .catch(() => setItems(timeline));
+        .catch(() => setItems(timeline))
+        .finally(() => setLoaded(true));
     };
     sync();
     window.addEventListener("love-site-uploads-changed", sync);
@@ -82,27 +104,30 @@ export function useTimelineMemories() {
     };
   }, []);
 
-  return useMemo(() => items, [items]);
+  return useMemo(() => ({ items, loaded }), [items, loaded]);
 }
 
 function useCloudList<T>(key: keyof Awaited<ReturnType<typeof fetchMemories>>, fallback: T[]) {
-  const [items, setItems] = useState<T[]>(fallback);
+  const [items, setItems] = useState<T[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const sync = () => {
+      setLoaded(false);
       void fetchMemories()
         .then((store) => {
           const next = store[key] as T[];
           setItems(next.length ? next : fallback);
         })
-        .catch(() => setItems(fallback));
+        .catch(() => setItems(fallback))
+        .finally(() => setLoaded(true));
     };
     sync();
     window.addEventListener("love-site-uploads-changed", sync);
     return () => window.removeEventListener("love-site-uploads-changed", sync);
   }, [fallback, key]);
 
-  return items;
+  return useMemo(() => ({ items, loaded }), [items, loaded]);
 }
 
 export function useLetters() {
@@ -130,7 +155,7 @@ export function useStoryAssets() {
 }
 
 export function GalleryMasonry({ featuredOnly = false }: { featuredOnly?: boolean }) {
-  const allPhotos = usePhotoMemories();
+  const { items: allPhotos, loaded } = usePhotoMemories();
   const [selectedCategory, setSelectedCategory] = useState<"All" | MemoryCategory>("All");
   const [activePhoto, setActivePhoto] = useState<PhotoMemory | null>(null);
 
@@ -143,8 +168,9 @@ export function GalleryMasonry({ featuredOnly = false }: { featuredOnly?: boolea
 
   return (
     <div>
+      {!loaded ? <LoadingMemoryGrid count={featuredOnly ? 3 : 8} /> : null}
       {!featuredOnly ? (
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-2">
+        <div className={`${loaded ? "mb-8 flex" : "hidden"} gap-2 overflow-x-auto pb-2`}>
           {categories.map((category) => (
             <button
               key={category}
@@ -162,7 +188,7 @@ export function GalleryMasonry({ featuredOnly = false }: { featuredOnly?: boolea
         </div>
       ) : null}
 
-      <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
+      <div className={`${loaded ? "columns-1" : "hidden"} gap-4 sm:columns-2 lg:columns-3 xl:columns-4`}>
         {visiblePhotos.map((photo, index) => (
           <motion.button
             key={photo.id}
@@ -240,13 +266,14 @@ export function GalleryMasonry({ featuredOnly = false }: { featuredOnly?: boolea
 }
 
 export function VideoGrid({ featuredOnly = false }: { featuredOnly?: boolean }) {
-  const allVideos = useVideoMemories();
+  const { items: allVideos, loaded } = useVideoMemories();
   const [activeVideo, setActiveVideo] = useState<VideoMemory | null>(null);
   const visibleVideos = featuredOnly ? allVideos.filter((video) => video.featured) : allVideos;
 
   return (
     <>
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {!loaded ? <LoadingMemoryGrid count={featuredOnly ? 3 : 6} /> : null}
+      <div className={`${loaded ? "grid" : "hidden"} gap-5 md:grid-cols-2 xl:grid-cols-3`}>
         {visibleVideos.map((video, index) => (
           <VideoCard key={video.id} video={video} index={index} onOpen={() => setActiveVideo(video)} />
         ))}

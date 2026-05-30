@@ -20,6 +20,8 @@ import { PageTransition } from "@/components/PageTransition";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SiteShell } from "@/components/SiteShell";
 import { categories, type MemoryCategory } from "@/data/memories";
+import { invalidateMemoriesCache } from "@/lib/storage";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 type ModuleKey =
   | "photos"
@@ -290,13 +292,21 @@ function AdminStudio() {
     setStatus(editing ? "Updating..." : "Saving...");
 
     try {
+      let directVideoUrl = "";
+      if (active.key === "videos" && file) {
+        setStatus("Uploading video to cloud storage...");
+        directVideoUrl = await uploadVideoDirectly(file);
+      }
+
       const formData = new FormData();
       formData.set("table", active.key);
       if (editing) formData.set("id", editing.id);
       Object.entries(form).forEach(([key, value]) => formData.set(key, String(value)));
+      if (directVideoUrl) formData.set("videoSrc", directVideoUrl);
       if (editing && !file) addExistingMedia(active.key, editing, formData);
-      if (file) formData.set("file", file, file.name);
+      if (file && active.key !== "videos") formData.set("file", file, file.name);
 
+      setStatus(editing ? "Saving metadata..." : "Saving memory...");
       const response = await fetch("/api/admin/content", {
         method: editing ? "PATCH" : "POST",
         body: formData,
@@ -305,6 +315,8 @@ function AdminStudio() {
       if (!response.ok || !data.ok) throw new Error(data.message || "Unable to save content.");
 
       setStatus(editing ? "Updated beautifully." : "Saved beautifully.");
+      invalidateMemoriesCache();
+      window.dispatchEvent(new Event("love-site-uploads-changed"));
       resetForm();
       await loadItems();
     } catch (error) {
@@ -546,4 +558,31 @@ function addExistingMedia(table: ModuleKey, item: AdminItem, formData: FormData)
   if ((table === "timeline" || table === "secret_cards" || table === "home_images" || table === "story_assets" || table === "story_chapters") && item.image) {
     formData.set("image", String(item.image));
   }
+}
+
+async function uploadVideoDirectly(file: File) {
+  const supabase = createSupabaseBrowserClient();
+  if (!supabase) throw new Error("Supabase is not configured. Please check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+
+  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : ".mp4";
+  const filePath = `videos/${crypto.randomUUID()}${extension}`;
+  console.log("[admin] direct video upload:", {
+    bucket: "videos",
+    filePath,
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
+
+  const { error } = await supabase.storage.from("videos").upload(filePath, file, {
+    contentType: file.type || "video/mp4",
+    upsert: false,
+  });
+
+  if (error) throw new Error(`Video upload failed: ${error.message}`);
+
+  const { data } = supabase.storage.from("videos").getPublicUrl(filePath);
+  if (!data.publicUrl) throw new Error("Video upload succeeded, but Supabase did not return a public URL.");
+  console.log("[admin] direct video public URL:", data.publicUrl);
+  return data.publicUrl;
 }
